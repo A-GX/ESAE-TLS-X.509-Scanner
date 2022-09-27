@@ -1,8 +1,6 @@
-## Choice of Language : C
+## Choice of Language : Python
 
 ## libraries
 
 ## Convention to follow
 
-## help
-got help from  https://github.com/msabramo/pyOpenSSL/tree/master/examples

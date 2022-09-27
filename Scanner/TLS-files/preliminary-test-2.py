@@ -18,6 +18,7 @@ Set up local store of trusted root certificate
     -> in order to verify the server cert chain later on
 """
 trustedCA = crypto.X509Store()
+trustedCA.load_locations("Scanner/root_store/week3-roots.pem", None)
     #/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
     # TODO
     #   -> enter the truster root CA
@@ -58,8 +59,13 @@ for x509 in cert_chain:
 Manage cert PART 2/2:
  ->
 """
-store_ctxt = crypto.X509StoreContext(trustedCA, cert_chain, chain=True)
-    #/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
-    # TODO
-    #   -> Check how this class works
-    #/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
+store_ctxt = crypto.X509StoreContext(trustedCA, cert_chain[0], cert_chain[1:])
+try:                                                 
+    # try to verify the certificate
+    checked_chn = store_ctxt.verify_certificate()
+except crypto.X509StoreContextError as e:            
+    # intercepet the error that may be raised
+    print(e)
+else:                                               
+    # celebrate
+    print("yay")
