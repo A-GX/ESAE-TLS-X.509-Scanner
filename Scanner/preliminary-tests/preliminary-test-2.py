@@ -3,6 +3,7 @@ from OpenSSL import SSL # to create connection
 from OpenSSL import crypto # to check certificates
 from datetime import datetime
 import socket
+import json
 
 
 """
@@ -10,9 +11,9 @@ Set up the context :
     -> TLS method (in header)
     -> TLS version
 """
-ctxt = SSL.Context(SSL.TLSv1_1_METHOD) # start handshake with TLSv1.2 id (for TLSv1.2 and TLSv1.3)
-ctxt.set_min_proto_version(SSL.TLS1_1_VERSION) # set TLSv1.X as only accepted version
-ctxt.set_max_proto_version(SSL.TLS1_2_VERSION)
+ctxt = SSL.Context(SSL.TLS_CLIENT_METHOD) # start handshake with TLSv1.2 id (for TLSv1.2 and TLSv1.3)
+ctxt.set_min_proto_version(SSL.TLS1_3_VERSION) # set TLSv1.X as only accepted version
+#ctxt.set_max_proto_version(SSL.TLS1_VERSION)
 
 """
 Set up local store of trusted root certificate
@@ -42,6 +43,8 @@ Manage cert PART 1/2: /!\ mainly for testing purposes /!\
     -> print it
 """
 cert_chain = conn.get_peer_cert_chain()
+final = {}
+i=0
 for x509 in cert_chain:
     result = {
         'subject': dict(x509.get_subject().get_components()),
@@ -54,7 +57,10 @@ for x509 in cert_chain:
     extensions = (x509.get_extension(i) for i in range(x509.get_extension_count()))
     extension_data = {e.get_short_name(): str(e) for e in extensions}
     result.update(extension_data)
-    pprint(result)
+    i=i+1
+    final["Certificate {}".format(i)] = result
+pprint(final)
+
 
 """
 Manage cert PART 2/2:
