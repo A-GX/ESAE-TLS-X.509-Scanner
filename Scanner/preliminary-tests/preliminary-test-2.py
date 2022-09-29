@@ -10,8 +10,9 @@ Set up the context :
     -> TLS method (in header)
     -> TLS version
 """
-ctxt = SSL.Context(SSL.TLSv1_2_METHOD) # start handshake with TLSv1.2 id (for TLSv1.2 and TLSv1.3)
-ctxt.set_min_proto_version(SSL.TLS1_3_VERSION) # set TLSv1.3 as only accepted version
+ctxt = SSL.Context(SSL.TLSv1_1_METHOD) # start handshake with TLSv1.2 id (for TLSv1.2 and TLSv1.3)
+ctxt.set_min_proto_version(SSL.TLS1_1_VERSION) # set TLSv1.X as only accepted version
+ctxt.set_max_proto_version(SSL.TLS1_2_VERSION)
 
 """
 Set up local store of trusted root certificate
