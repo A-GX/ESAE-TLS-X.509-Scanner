@@ -2,11 +2,12 @@
 #                libraries import               #
 #################################################
 ### Public Libraries
+# OpenSSL version 22.0.0
 from OpenSSL import SSL # create connection
 from OpenSSL import crypto # to check certificates
 import socket
 ### Project defined
-import log
+import LOG
 
 class Tls:
     """
@@ -16,7 +17,7 @@ class Tls:
     """
 
     
-    def __init__(self, tls:int, host:str, trustedCA:str, logs:log.Log):
+    def __init__(self, tls:int, host:str, trustedCA:str, logs:LOG.Log):
         """
         ----Function----
         Name :      __init__()
@@ -26,16 +27,21 @@ class Tls:
         Effect :    Initialise the newly created object
         """
         self.__context = self.__set_context(tls)
-        self.__connection = self.__set_connection(self.__context, host)
-        (self.__certificate_chain, self.__ERR_CONNECTION_FAILED) = self.__get_certif(self.__connection)
-        if self.__ERR_CONNECTION_FAILED is None:
-            self.__trustedCA = self.__set_trustedCA(trustedCA)
-            self.__store_ctxt = crypto.X509StoreContext(self.__trustedCA, self.__certificate_chain[0], self.__certificate_chain[1:])
-            self.__ERR_CHECK_CERT = self.__check_cert(self.__store_ctxt)
-            if self.__ERR_CHECK_CERT is None:
-                print("SUCCESS")
-            self.__logs = logs
-        # Need to do the logs
+        (self.__connection, self.__ERR_CONNECT_FAILED)= self.__set_connection(self.__context, host)
+        if self.__ERR_CONNECT_FAILED is None:
+            (self.__certificate_chain, self.__ERR_CERTIF_FAILED) = self.__get_certif(self.__connection)
+            if self.__ERR_CERTIF_FAILED is None:
+                self.__trustedCA = self.__set_trustedCA(trustedCA)
+                self.__store_ctxt = crypto.X509StoreContext(self.__trustedCA, self.__certificate_chain[0], self.__certificate_chain[1:])
+                self.__ERR_CHECK_CERT = self.__check_cert(self.__store_ctxt)
+                if self.__ERR_CHECK_CERT is None:
+                    print("SUCCESS")
+                self.__logs = logs
+                # Need to do the logs
+            else :
+                print("\033[93m[Certificate from {} Not Obtained].format(host)"+str(self.__ERR_CERTIF_FAILED)+"\033[0m")
+        else :
+            print("\033[93m[Connection to {} Failed]".format(host) + str(self.__ERR_CONNECT_FAILED)+"\033[0m")
 
 
     #################################################
@@ -80,8 +86,11 @@ class Tls:
         Return:     connection(SSl.Connection)
         """
         conn = SSL.Connection(ctxt, socket.socket(socket.AF_INET, socket.SOCK_STREAM))
-        conn.connect((host,443))
-        return conn
+        try:
+            conn.connect((host,443))
+        except Exception as e:
+            return(None,e)
+        return (conn,None)
 
     def __get_certif(self, conn:SSL.Connection):
         """
@@ -139,6 +148,7 @@ class Tls:
 
 
 if __name__ == "__main__":
-    l= log.Log(None, None)
+    l= LOG.Log(None, None)
     path="/home/antoine/Documenti/Education/Master2/TLS-X.509-Scanner/Scanner/root_store/week3-roots.pem"
-    tls = Tls(tls=2,host="google.com",trustedCA=path,logs=l)
+    tls = Tls(tls=3,host='35.182.229.203',trustedCA=path,logs=l)
+    # 51.83.195.56   35.182.229.203

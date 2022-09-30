@@ -1,6 +1,7 @@
 #################################################
 #                libraries import               #
 #################################################
+# OpenSSL version 22.0.0
 from OpenSSL import crypto # to check certificates
 import json
 
@@ -11,7 +12,7 @@ class Log:
     Name :  log
     Use :   todo
     """
-    def __init__(self, log_tls, log_x509):
+    def __init__(self, log_tls, log_x509, log_errors = None):
         """
         ----Function----
         Name :      __init__()
@@ -21,6 +22,7 @@ class Log:
         """
         self.__log_tls = log_tls
         self.__log_x509 = log_x509
+        self.__log_errors =  log_errors
 
     #################################################
     #                Private methods                #
@@ -29,10 +31,27 @@ class Log:
     #################################################
     #                 Public methods                #
     #################################################
+    def errors_write(self,error):
+        """
+        ----Function----
+        Name :      errors_write()
+        Args :      self -> instance of the object
+                    errors -> a chain of certificate to write in
+                        the log 
+        Effect :    if a file has been specified for log_errors, write in it.
+                    else, print in stdout. The name error is a bit much, it is actually warnings
+        Return:     None
+        """
+        if self.__log_errors is None:
+            print("\033[93m" + str(error)+"\033[0m")
+        else :
+            self.__log_errors.write(str(error))
+
+            
     def x509_write(self, certif_chain):
         """
         ----Function----
-        Name :      __x509_write()
+        Name :      x509_write()
         Args :      self -> instance of the object
                     certif_chain -> a chain of certificate to write in
                         the log 
