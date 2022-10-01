@@ -17,8 +17,9 @@ def tls(tls:int, host:str, trustedCA:str, logs:LOG.Log):
     type :      class constructor
     Args :      bject tls) the current object
                 tls(int) -> the tls version to use for the connection
-    Effect :    Initialise the newly created object
+    Effect :    manages the connection until the end
     """
+
     context = set_context(tls)
     (connection, ERR_CONNECT_FAILED)= set_connection(context, host)
     if ERR_CONNECT_FAILED is None:
@@ -57,10 +58,10 @@ def set_context(tls:int):
         context = SSL.Context(SSL.TLSv1_2_METHOD) # specify TLS 1.2 in header
         if tls == 2 : # version = TLS 1.2
             context.set_min_proto_version(SSL.TLS1_2_VERSION) # version to use = TLS 1.2
-            context.set_max_proto_version(SSL.TLS1_2_VERSION)
+            #context.set_max_proto_version(SSL.TLS1_2_VERSION)
         if tls == 3 : # version = TLS 1.2
             context.set_min_proto_version(SSL.TLS1_3_VERSION) # version to use = TLS 1.3
-            context.set_max_proto_version(SSL.TLS1_3_VERSION)
+            #context.set_max_proto_version(SSL.TLS1_3_VERSION)
     return context
 
 
@@ -97,8 +98,11 @@ def get_certif(conn:SSL.Connection):
     try :
         conn.do_handshake()
         certif_chain = conn.get_peer_cert_chain()
+        conn.shutdown()
+        conn.close()
         return(certif_chain,None)
     except Exception as e:
+        conn.close()
         return (None,e)
 
 def set_trustedCA(path:str):

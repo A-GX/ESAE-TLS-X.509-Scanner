@@ -7,6 +7,7 @@ from os import getcwd # testing purposes
 from os.path import exists # check if file exists
 from ipaddress import ip_address, ip_network # to check if ip in network
 import socket # to convert all host name into ip addresses
+from threading import Thread
 ### Project defined
 import LOG
 import TLS
@@ -223,9 +224,16 @@ def main():
     to_scan = set_to_scan(b_list, in_list)
     # initialise the object to write the logs
     output_logs = LOG.Log(LOG_TLS, LOG_X509)
+    connection_threads = []
     for ip in to_scan :
-           connect = TLS.tls(3,ip,ROOT_STORE,output_logs)
-           del connect
+        connection = Thread(target = TLS.tls, args = (2,ip,ROOT_STORE,output_logs))
+        connection_threads.append(connection)
+        connection.start()
+        if len(connection_threads) >= 50:
+            for connection in connection_threads :
+                connection.join()
+            connection_threads.clear()
+
     close_files()
 
 

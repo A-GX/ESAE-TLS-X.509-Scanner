@@ -6,21 +6,17 @@ import socket
 import json
 
 
-"""
-Set up the context :
-    -> TLS method (in header)
-    -> TLS version
-"""
-ctxt = SSL.Context(SSL.TLSv1_2_METHOD) # start handshake with TLSv1.2 id (for TLSv1.2 and TLSv1.3)
-ctxt.set_min_proto_version(SSL.TLS1_3_VERSION) # set TLSv1.X as only accepted version
-#ctxt.set_max_proto_version(SSL.TLS1_VERSION)
+
+ctxt = SSL.Context(SSL.TLSv1_METHOD) # start handshake with TLSv1.2 id (for TLSv1.2 and TLSv1.3)
+ctxt.set_options(SSL.OP_NO_TLSv1_2)
+#ctxt.set_min_proto_version(SSL.TLS1_3_VERSION)
 
 """
 Set up local store of trusted root certificate
     -> in order to verify the server cert chain later on
 """
 trustedCA = crypto.X509Store()
-trustedCA.load_locations("root_store/week3-roots.pem", None)
+trustedCA.load_locations("Scanner/root_store/week3-roots.pem", None)
     #/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
     # TODO
     #   -> enter the truster root CA
@@ -33,9 +29,8 @@ set up coonection
     -> connect to host and port
     -> do hand-shake
 """
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s = socket.socket() #socket.AF_INET, socket.SOCK_STREAM
 conn = SSL.Connection(ctxt, s)
-conn.settimeout(10)
 conn.connect(("google.com",443))
 conn.do_handshake()
 
@@ -45,6 +40,7 @@ Manage cert PART 1/2: /!\ mainly for testing purposes /!\
     -> print it
 """
 cert_chain = conn.get_peer_cert_chain()
+print(conn.get_protocol_version_name())
 final = {}
 i=0
 for x509 in cert_chain:
