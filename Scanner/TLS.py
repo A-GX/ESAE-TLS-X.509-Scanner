@@ -87,6 +87,7 @@ class Tls:
         """
         conn = SSL.Connection(ctxt, socket.socket(socket.AF_INET, socket.SOCK_STREAM))
         try:
+            # cann't find how to set timeout, can take up to 5min (300s)
             conn.connect((host,443))
         except Exception as e:
             return(None,e)

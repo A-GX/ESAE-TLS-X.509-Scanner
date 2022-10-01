@@ -216,7 +216,7 @@ def main():
         ROOT_STORE is None
     ):
         close_files()
-        raise ValueError(ERR_MISSING_ARG+str(LOG_TLS)+str(LOG_X509)+str(BLOCK_LIST)+str(IN)+str(ROOT_STORE))
+        raise ValueError(ERR_MISSING_ARG)
     
     b_list =  extract(BLOCK_LIST)
     in_list = extract(IN,True) # "Network" field should be empty

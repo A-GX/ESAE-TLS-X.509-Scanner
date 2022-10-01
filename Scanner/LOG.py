@@ -3,6 +3,7 @@
 #################################################
 # OpenSSL version 22.0.0
 from OpenSSL import crypto # to check certificates
+from datetime import datetime
 import json
 
 
@@ -47,7 +48,7 @@ class Log:
         else :
             self.__log_errors.write(str(error))
 
-            
+
     def x509_write(self, certif_chain):
         """
         ----Function----
@@ -60,7 +61,7 @@ class Log:
         """
         final = {}
         i=0
-        for x509 in cert_chain:
+        for x509 in certif_chain:
             result = {
                 'subject': dict(x509.get_subject().get_components()),
                 'issuer': dict(x509.get_issuer().get_components()),
