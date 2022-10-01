@@ -224,7 +224,7 @@ def main():
     # initialise the object to write the logs
     output_logs = LOG.Log(LOG_TLS, LOG_X509)
     for ip in to_scan :
-           connect = TLS.Tls(3,ip,ROOT_STORE,output_logs)
+           connect = TLS.tls(3,ip,ROOT_STORE,output_logs)
            del connect
     close_files()
 
