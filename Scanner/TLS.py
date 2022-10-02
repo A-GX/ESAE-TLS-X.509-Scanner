@@ -3,6 +3,7 @@
 #################################################
 ### Public Libraries
 # OpenSSL version 22.0.0
+import ssl
 from OpenSSL import SSL # create connection
 from OpenSSL import crypto # to check certificates
 import socket
@@ -20,6 +21,21 @@ def tls(tls:int, host:str, trustedCA:str, logs:LOG.Log):
     Effect :    manages the connection until the end
     """
 
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.load_verify_locations(trustedCA)
+    context.check_hostname = False
+    s = context.wrap_socket(socket.socket())
+    s.settimeout(10)
+    try:
+        s.connect((host,443))
+        cert=s.getpeercert()
+        logs.x509_write(cert)
+        logs.errors_write(str(s.version()))   
+    except Exception as e:
+        logs.errors_write(str(e))
+
+
+"""
     context = set_context(tls)
     (connection, ERR_CONNECT_FAILED)= set_connection(context, host)
     if ERR_CONNECT_FAILED is None:
@@ -36,8 +52,8 @@ def tls(tls:int, host:str, trustedCA:str, logs:LOG.Log):
             print("\033[93m[Certificate from {} Not Obtained].format(host)"+str(ERR_CERTIF_FAILED)+"\033[0m")
     else :
         print("\033[93m[Connection to {} Failed]".format(host) + str(ERR_CONNECT_FAILED)+"\033[0m")
-
-
+"""
+'''
 def set_context(tls:int):
     """
     ----Function----
@@ -132,7 +148,7 @@ def check_cert(ctxt):
         # intercepet the error that may be raised
         return e
     return None
-
+'''
 
 if __name__  ==  "__main__":
     l= LOG.Log(None, None)

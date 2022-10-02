@@ -223,17 +223,20 @@ def main():
     in_list = extract(IN,True) # "Network" field should be empty
     to_scan = set_to_scan(b_list, in_list)
     # initialise the object to write the logs
-    output_logs = LOG.Log(LOG_TLS, LOG_X509)
+    f = open("test-out/errors.txt","wb")
+    output_logs = LOG.Log(LOG_TLS, LOG_X509,f)
     connection_threads = []
     for ip in to_scan :
         connection = Thread(target = TLS.tls, args = (2,ip,ROOT_STORE,output_logs))
         connection_threads.append(connection)
         connection.start()
-        if len(connection_threads) >= 50:
+        """if len(connection_threads) >= 50:
             for connection in connection_threads :
                 connection.join()
-            connection_threads.clear()
-
+            connection_threads.clear()"""
+    for connection in connection_threads :
+        connection.join()
+    f.close()
     close_files()
 
 

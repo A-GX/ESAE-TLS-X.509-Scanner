@@ -13,7 +13,7 @@ class Log:
     Name :  log
     Use :   todo
     """
-    def __init__(self, log_tls, log_x509, log_errors = None):
+    def __init__(self, log_tls, log_x509, log_errors):
         """
         ----Function----
         Name :      __init__()
@@ -25,6 +25,7 @@ class Log:
         self.__log_x509 = log_x509
         self.__log_errors =  log_errors
 
+
     #################################################
     #                Private methods                #
     #################################################
@@ -32,7 +33,7 @@ class Log:
     #################################################
     #                 Public methods                #
     #################################################
-    def errors_write(self,error):
+    def errors_write(self,error:str):
         """
         ----Function----
         Name :      errors_write()
@@ -42,11 +43,11 @@ class Log:
         Effect :    if a file has been specified for log_errors, write in it.
                     else, print in stdout. The name error is a bit much, it is actually warnings
         Return:     None
-        """
+        """ 
         if self.__log_errors is None:
-            print("\033[93m" + str(error)+"\033[0m")
+            print("\033[93m" + error +"\033[0m")
         else :
-            self.__log_errors.write(str(error))
+            self.__log_errors.write((str(error)+"\n").encode('ascii'))
 
 
     def x509_write(self, certif_chain):
@@ -59,7 +60,8 @@ class Log:
         Effect :    set up the connection to use for the handshake
         Return:     None
         """
-        final = {}
+        self.__log_x509.write(json.dumps(certif_chain, indent=2)+"\n")
+        """final = {}
         i=0
         for x509 in certif_chain:
             result = {
@@ -76,7 +78,7 @@ class Log:
             i=i+1
             final["Certificate {}".format(i)] = result
 
-        self.__log_x509.write(json.dumps(result, indent=2))
+        self.__log_x509.write(json.dumps(result, indent=2))"""
     
     def TLS_write(self, smth):
         """
