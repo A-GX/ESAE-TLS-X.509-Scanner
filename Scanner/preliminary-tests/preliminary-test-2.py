@@ -1,4 +1,5 @@
 from pprint import pprint
+from ssl import PROTOCOL_TLS_CLIENT
 from OpenSSL import SSL # to create connection
 from OpenSSL import crypto # to check certificates
 from datetime import datetime
@@ -6,11 +7,28 @@ import socket
 import json
 
 
+hostname = "google.com"
+ca ='/home/antoine/Documenti/Education/Master2/TLS-X.509-Scanner/Scanner/root_store/week3-roots.pem'
 
-ctxt = SSL.Context(SSL.TLSv1_METHOD) # start handshake with TLSv1.2 id (for TLSv1.2 and TLSv1.3)
-ctxt.set_options(SSL.OP_NO_TLSv1_2)
-#ctxt.set_min_proto_version(SSL.TLS1_3_VERSION)
 
+context = SSL.Context(SSL.TLS_CLIENT_METHOD)
+context.load_verify_locations(ca)
+
+print('Getting certificate chain for {0}'.format(hostname))
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock = SSL.Connection(context=context, socket=sock)
+sock.settimeout(5)
+sock.connect((hostname, 443))
+sock.setblocking(1)
+sock.do_handshake()
+for (idx, cert) in enumerate(sock.get_peer_cert_chain()):
+    print(' {0} s:{1}'.format(idx, cert.get_subject()))
+    print(' {0} i:{1}'.format(' ', cert.get_issuer()))
+sock.shutdown()
+sock.close()
+
+
+'''
 """
 Set up local store of trusted root certificate
     -> in order to verify the server cert chain later on
@@ -39,6 +57,7 @@ Manage cert PART 1/2: /!\ mainly for testing purposes /!\
     -> get cert chain
     -> print it
 """
+
 cert_chain = conn.get_peer_cert_chain()
 print(conn.get_protocol_version_name())
 final = {}
@@ -73,4 +92,4 @@ except crypto.X509StoreContextError as e:
     print(e)
 else:                                               
     # celebrate
-    print("yay")
+    print("yay")'''

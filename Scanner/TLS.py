@@ -21,17 +21,25 @@ def tls(tls:int, host:str, trustedCA:str, logs:LOG.Log):
     Effect :    manages the connection until the end
     """
 
+    # set context so that client and server negotiate TLS protocol
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    #  set root store to verify certif
     context.load_verify_locations(trustedCA)
+    # It never worked with check_hostname = True
     context.check_hostname = False
-    s = context.wrap_socket(socket.socket())
+    s = context.wrap_socket(socket.socket())#, host)
+    # timeout = 10 to not spend 3+ minutes to get a [connection time out]
     s.settimeout(10)
-    try:
-        s.connect((host,443))
-        cert=s.getpeercert()
-        logs.x509_write(cert)
-        logs.errors_write(str(s.version()))   
+    try: # try to do the connection
+        s.connect((host,443)) # connect to the host
+        # get cert, but not the chain. ssl does not support it, and OpenSSL never
+        # worked correctly (error No SNI provided; please fix your client.
+        # and [('SSL routines', '', 'internal error')] with lower version than 1.2)
+        cert=s.getpeercert() # get its cert, but no chain. 
+        logs.x509_write(cert) # log the cert
+        logs.errors_write(str(s.version())) # log the version in a separate log  
     except Exception as e:
+        # log the error
         logs.errors_write(str(e))
 
 
