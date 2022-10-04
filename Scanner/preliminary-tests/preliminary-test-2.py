@@ -43,6 +43,7 @@ for x509 in cert_chain:
         for b in tempo[k].keys():
             tempo2[k][str(b)[2:-1]] = str(tempo[k][b])[2:-1]
 """
+
     extensions = (x509.get_extension(i) for i in range(x509.get_extension_count()))
     extension_data = {e.get_short_name(): str(e) for e in extensions}
     tempo2.update(extension_data)
@@ -65,7 +66,7 @@ for x509 in cert_chain:
                 result[k][str(b)[2:-1]] = str(tempo2[k][b])[2:-1]
     i=i+1
     final.append(result)
-pprint(final[0])
+print(final[0])
 sock.shutdown()
 sock.close()
 

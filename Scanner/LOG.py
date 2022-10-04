@@ -93,7 +93,7 @@ class Log:
                     if k == 'ct_precert_scts' : # extract a list of oll  the ct log it of certificate
                         res =  re.findall('Log ID.*\n.*', tempo2[k]) # get list of all LOG ID : ...\n...(stop at \n here)
                         f=[]
-                        #str that match the two half of the ID from the ugly string extracted above
+                        #pattern that match the two half of the ID from the ugly string extracted above
                         to_match = '[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:?'
                         for id in res : # create a nice string of the ID
                             r=re.findall(to_match,id)

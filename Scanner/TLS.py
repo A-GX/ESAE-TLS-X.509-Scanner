@@ -11,7 +11,7 @@ import socket
 import LOG
 
     
-def tls(tls:int, ip:str, host:str, trustedCA:str, logs:LOG.Log):
+def tls(tls:int, ip:str, host:str, trustedCA:str, logs:LOG.Log, i:int):
     """
     ----Function----
     Name :      ini ()
@@ -31,7 +31,7 @@ def tls(tls:int, ip:str, host:str, trustedCA:str, logs:LOG.Log):
             logs.errors_write(ERR_CERTIF_FAILED)
     else :
         logs.errors_write(ERR_CONNECT_FAILED)
-
+    print(i)
 
 
 def set_context(tls:int, ca:str):
@@ -62,7 +62,6 @@ def set_connection(ctxt:SSL.Context, ip:str, host:str):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock = SSL.Connection(context=ctxt, socket=sock)
     sock.set_tlsext_host_name(host.encode("utf-8"))
-    sock.settimeout(1) # does not seem to work, time out still painfully long
     sock.setblocking(1) # do not block the connection, not that useful
     try :
         sock.connect((ip, 443))

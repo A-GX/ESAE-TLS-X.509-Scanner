@@ -236,8 +236,10 @@ def main():
     output_logs = LOG.Log(LOG_X509,LOG_ERR)
     connection_threads = []
     st1 = time.time()
+    i=0
     for (dn,ip) in to_scan :
-        connection = Thread(target = TLS.tls, args = (2,ip,dn,ROOT_STORE,output_logs))
+        i += 1
+        connection = Thread(target = TLS.tls, args = (2,ip,dn,ROOT_STORE,output_logs, i))
         connection_threads.append(connection)
         connection.start()  
     for connection in connection_threads :
