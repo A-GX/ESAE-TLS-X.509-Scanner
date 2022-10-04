@@ -72,10 +72,6 @@ class Log:
             tempo2 = { # get subject and issuer field of cert
                 'subject': dict(x509.get_subject().get_components()),
                 'issuer': dict(x509.get_issuer().get_components())
-            # 'serialNumber': x509.get_serial_number(),
-            # 'version': x509.get_version(),
-            # 'notBefore': datetime.strptime((x509.get_notBefore()).decode("utf-8"), '%Y%m%d%H%M%SZ'),
-            # 'notAfter': datetime.strptime(x509.get_notAfter().decode("utf-8"), '%Y%m%d%H%M%SZ')
             }
             # get other field of cert (of xwhich field on ct logs)
             extensions = (x509.get_extension(i) for i in range(x509.get_extension_count()))

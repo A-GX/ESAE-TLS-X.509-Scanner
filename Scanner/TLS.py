@@ -26,12 +26,6 @@ def tls(tls:int, ip:str, host:str, trustedCA:str, logs:LOG.Log):
     if ERR_CONNECT_FAILED is None:
         (certificate_chain, ERR_CERTIF_FAILED) = get_certif(connection, ip)
         if ERR_CERTIF_FAILED is None:
-#            #trustedCA = set_trustedCA(trustedCA)
-#            #store_ctxt = crypto.X509StoreContext(trustedCA, certificate_chain[0], certificate_chain[1:])
-#            ERR_CHECK_CERT = check_cert(store_ctxt)
-#            if ERR_CHECK_CERT is None:
-#                print("SUCCESS")
-            # Need to do the logs
             logs.x509_write(certificate_chain, connection.get_protocol_version_name()) # log the cert
         else :
             logs.errors_write(ERR_CERTIF_FAILED)
@@ -39,26 +33,6 @@ def tls(tls:int, ip:str, host:str, trustedCA:str, logs:LOG.Log):
         logs.errors_write(ERR_CONNECT_FAILED)
 
 
-#    # set context so that client and server negotiate TLS protocol
-#    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-#    #  set root store to verify certif
-#    context.load_verify_locations(trustedCA)
-#    # It never worked with check_hostname = True
-#    context.check_hostname = True
-#    s = context.wrap_socket(socket.socket(), server_hostname=name) # /!\/!\host name should be first column/!\/!\
-#    # timeout = 10 to not spend 3+ minutes to get a [connection time out]
-#    s.settimeout(10)
-#    try: # try to do the connection
-#        s.connect((host,443)) # connect to the host
-#        # get cert, but not the chain. ssl does not support it, and OpenSSL never
-#        # worked correctly (error No SNI provided; please fix your client.
-#        # and [('SSL routines', '', 'internal error')] with lower version than 1.2)
-#        cert=s.getpeercert() # get its cert, but no chain. 
-#        logs.x509_write(cert) # log the cert
-#        logs.errors_write(str(s.version())) # log the version in a separate log  
-#    except Exception as e:
-#        # log the error
-#        logs.errors_write(str(e))
 
 def set_context(tls:int, ca:str):
     """
@@ -74,23 +48,6 @@ def set_context(tls:int, ca:str):
     context.set_timeout(1)
     return context
 
-#    if tls == 0: # version = TLS 1.0
-#        context = SSL.Context(SSL.TLSv1_METHOD) # specify TLS 1.0 in header
-#        context.set_min_proto_version(SSL.TLS1_VERSION)  # version to use = TLS 1.0
-#        context.set_max_proto_version(SSL.TLS1_VERSION)
-#    elif tls == 1: # version = TLS 1.1
-#        context = SSL.Context(SSL.TLSv1_1_METHOD) # specify TLS 1.1 in header
-#        context.set_min_proto_version(SSL.TLS1_1_VERSION) # version to use = TLS 1.1
-#        context.set_max_proto_version(SSL.TLS1_1_VERSION)
-#    else : # version = TLS 1.2 or 1.3
-#        context = SSL.Context(SSL.TLSv1_2_METHOD) # specify TLS 1.2 in header
-#        if tls == 2 : # version = TLS 1.2
-#            context.set_min_proto_version(SSL.TLS1_2_VERSION) # version to use = TLS 1.2
-#            #context.set_max_proto_version(SSL.TLS1_2_VERSION)
-#        if tls == 3 : # version = TLS 1.2
-#            context.set_min_proto_version(SSL.TLS1_3_VERSION) # version to use = TLS 1.3
-#            #context.set_max_proto_version(SSL.TLS1_3_VERSION)
-#    return context
 
 
 def set_connection(ctxt:SSL.Context, ip:str, host:str):
@@ -115,13 +72,6 @@ def set_connection(ctxt:SSL.Context, ip:str, host:str):
         return (None, str(e))
 
 
-#    conn = SSL.Connection(ctxt, socket.socket(socket.AF_INET, socket.SOCK_STREAM))
-#    try:
-#        # cann't find how to set timeout, can take up to 5min (300s)
-#        conn.connect((host,443))
-#    except Exception as e:
-#        return(None,e)name
-#    return (conn,None)
 
 def get_certif(conn:SSL.Connection, ip:str):
     """
@@ -144,44 +94,6 @@ def get_certif(conn:SSL.Connection, ip:str):
     except Exception as e:
         conn.close()
         return(None, str(e))
-
- #   try :
- #       conn.do_handshake()
- #       certif_chain = conn.get_peer_cert_chain()
- #       conn.shutdown()
- #       conn.close()
- #       return(certif_chain,None)
- #   except Exception as e:
- #       conn.close()
- #       return (None,e)
-
-#def set_trustedCA(path:str):
-#    """
-#    ----Function----
-#    Name :      set_trustedCA()
-#                path -> path towards the trustedCA
-#    Effect :    create the root store to verify certificates later on
-#    Return:     return the root store initialised
-#    """
-#    trustedCA = crypto.X509Store()
-#    trustedCA.load_locations(path, None)
-#    return trustedCA
-#        
-#def check_cert(ctxt):
-#    """
-#    ----Function----
-#    Name :      check_cert()
-#                ctxt -> context in xhich to check the cert chain
-#    Effect :    try to verify the certificates
-#    Return:     return the error
-#    """
-#    try:                                                 
-#        # try to verify the certificate
-#        ctxt.verify_certificate()
-#    except crypto.X509StoreContextError as e:            
-#        # intercepet the error that may be raised
-#        return e
-#    return None
 
 
 if __name__  ==  "__main__":
