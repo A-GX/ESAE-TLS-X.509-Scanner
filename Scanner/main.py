@@ -2,12 +2,15 @@
 #                libraries import               #
 #################################################
 ### Public Libraries
+#from time import sleep
+#from pprint import pprint
 import sys
 from os import getcwd # testing purposes
 from os.path import exists # check if file exists
 from ipaddress import ip_address, ip_network # to check if ip in network
 import socket # to convert all host name into ip addresses
 from threading import Thread
+import time
 ### Project defined
 import LOG
 import TLS
@@ -18,7 +21,7 @@ import TLS
 ERR_MISSING_OPTION = "\033[91m[Missing Option]: missing option in front of the file, please see -help\033[0m"
 ERR_SHOULD_BE_FILE = "\033[91m[Should Be a File]: the slot after command -{} should be a file name, not another command.\033[0m"
 ERR_MISSING_ARG = "\033[91m[Missing Arguments]: You are missing some mandatory arguments, please see -help\033[0m"
-LOG_TLS = None
+LOG_ERR = None
 LOG_X509 = None
 IN = None
 BLOCK_LIST = None
@@ -40,13 +43,13 @@ def analyse_options():
             #################################################
             #              Option to give file              #
             #################################################
-            if arg[1:] == "log-tls":
-                global LOG_TLS
+            if arg[1:] == "log-err":
+                global LOG_ERR
                 i += 1 # next arg = output file
                 f_name = sys.argv[i]
                 if f_name[0] == '-': # if following call parameter is a command, rais error
                     raise ValueError(ERR_SHOULD_BE_FILE.format(arg[1:]))
-                LOG_TLS = open(f_name, "w") # Need to check if we are allowed to read the file !!
+                LOG_ERR = open(f_name, "wb") # Need to check if we are allowed to read the file !!
             
             elif arg[1:] == "log-x509":
                 global LOG_X509
@@ -126,8 +129,8 @@ def close_files():
                 while calling the scanner
     Return:     None
     """
-    if not (LOG_TLS is None) :
-        LOG_TLS.close()
+    if not (LOG_ERR is None) :
+        LOG_ERR.close()
     if not(LOG_X509 is None) :
         LOG_X509.close()
     if not (BLOCK_LIST is None) :
@@ -145,17 +148,21 @@ def extract(file, inp = False):
     Return:     dic of ip, network and domain
     """
     result = {
+        "Domain": [],
         "Network": [],
         "IP": [],
     }
     list_lignes = file.readlines()
     for ligne in list_lignes:
-        if inp : # input format give domain + ip, we just do on the ip
-            ligne = ligne.split(",")[1]
         ligne = ligne[:-1] # we don't want the '\n'
+        if inp : # input format give domain + ip, we just do on the ip
+            domain = ligne.split(",")[0]
+            ligne = ligne.split(",")[1]
         try: # try to get lign as an ip address
             ip_address(ligne)
             result["IP"].append(ligne)
+            if inp :
+                result["Domain"].append(domain)
         except ValueError: # if it does not work
             if '/' in ligne: # it is either a network
                 result["Network"].append(ligne)
@@ -173,11 +180,12 @@ def set_to_scan(b_list, in_list):
     Args :      b_list(dic) -> dictionary of domain / network / ip we don't want to scan
                 in_list(dic) -> dictionary fo ip we want to scan
     Effect :    check if ip to scan are blacklisted
-    Return:     list of ip to scan not black listed (that we are actually authorised to scan)
+    Return:     list of (host,ip) to scan not black listed (that we are actually authorised to scan)
     """
     if not(in_list["Network"] == []):
         raise ValueError("TODO: no netword should  be here")
     result = []
+    cnt = 0 # count how many ip are in result
     for ip in in_list["IP"]:
         if not ip in b_list["IP"] :
             add = True
@@ -187,7 +195,8 @@ def set_to_scan(b_list, in_list):
                 else : 
                     add = add and False
             if add:
-                result.append(ip)
+                result.append((in_list["Domain"][cnt],ip))
+                cnt += 1
     return result
 
 
@@ -197,20 +206,21 @@ def main():
     """
     Testing setup :
         working dir : [.../]TLS-X.509-Scanner/Scanner
-        LOG_TLS  : test-out/tls.log
+        LOG_ERR  : test-out/tls.log
         LOG_X509 : test-out/x509.log
         BLOCK_LIST : test-input-files/week3-blocklist.txt
         IN : test-input-files/week3-input_testing.csv
         ROOT_STORE : root_store/week3-roots.pem
 
-        --> cmd : python3 main.py -log-tls test-out/tls.log -log-x509 test-out/x509.log \
+        --> cmd : python3 main.py -log-err test-out/error.log -log-x509 test-out/x509.log \
 -block-list test-input-files/week3-blocklist.txt \
 -in test-input-files/week3-input_testing.csv -root-store root_store/week3-roots.pem
     """
+    st0=time.time()
     analyse_options()
     
     if (
-        LOG_TLS is None or
+        LOG_ERR is None or
         LOG_X509 is None or
         BLOCK_LIST is None or
         IN is None or
@@ -223,22 +233,18 @@ def main():
     in_list = extract(IN,True) # "Network" field should be empty
     to_scan = set_to_scan(b_list, in_list)
     # initialise the object to write the logs
-    f = open("test-out/errors.txt","wb")
-    output_logs = LOG.Log(LOG_TLS, LOG_X509,f)
+    output_logs = LOG.Log(LOG_X509,LOG_ERR)
     connection_threads = []
-    for ip in to_scan :
-        connection = Thread(target = TLS.tls, args = (2,ip,ROOT_STORE,output_logs))
+    st1 = time.time()
+    for (dn,ip) in to_scan :
+        connection = Thread(target = TLS.tls, args = (2,ip,dn,ROOT_STORE,output_logs))
         connection_threads.append(connection)
-        connection.start()
-        """if len(connection_threads) >= 50:
-            for connection in connection_threads :
-                connection.join()
-            connection_threads.clear()"""
+        connection.start()  
     for connection in connection_threads :
         connection.join()
-    f.close()
     close_files()
-
+    end = time.time()
+    print("Total execution time : {} --- Scanning time : {}     <seconds>".format(end-st0, end-st1))
 
 
 if __name__ == "__main__":

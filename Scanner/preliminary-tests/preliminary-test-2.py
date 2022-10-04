@@ -1,29 +1,71 @@
 from pprint import pprint
-from ssl import PROTOCOL_TLS_CLIENT
+import re
 from OpenSSL import SSL # to create connection
 from OpenSSL import crypto # to check certificates
 from datetime import datetime
 import socket
 import json
+import ast
 
-
-hostname = "google.com"
+ip = "172.67.179.52"
+hostname = b"myorganicbuds.me"
 ca ='/home/antoine/Documenti/Education/Master2/TLS-X.509-Scanner/Scanner/root_store/week3-roots.pem'
 
 
 context = SSL.Context(SSL.TLS_CLIENT_METHOD)
 context.load_verify_locations(ca)
+context.set_verify(SSL.VERIFY_PEER)
 
 print('Getting certificate chain for {0}'.format(hostname))
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock = SSL.Connection(context=context, socket=sock)
-sock.settimeout(5)
-sock.connect((hostname, 443))
+sock.set_tlsext_host_name(hostname)
+sock.settimeout(1)
 sock.setblocking(1)
+sock.connect((ip, 443))
 sock.do_handshake()
-for (idx, cert) in enumerate(sock.get_peer_cert_chain()):
-    print(' {0} s:{1}'.format(idx, cert.get_subject()))
-    print(' {0} i:{1}'.format(' ', cert.get_issuer()))
+cert_chain = sock.get_peer_cert_chain()
+print(sock.get_protocol_version_name())
+final = []
+i=0
+for x509 in cert_chain:
+    tempo2 = {
+        'subject': dict(x509.get_subject().get_components()),
+        'issuer': dict(x509.get_issuer().get_components())
+       # 'serialNumber': x509.get_serial_number(),
+       # 'version': x509.get_version(),
+       # 'notBefore': datetime.strptime((x509.get_notBefore()).decode("utf-8"), '%Y%m%d%H%M%SZ'),
+       # 'notAfter': datetime.strptime(x509.get_notAfter().decode("utf-8"), '%Y%m%d%H%M%SZ')
+    }
+    """tempo2={}
+    for k in tempo.keys():
+        tempo2[k]={}
+        for b in tempo[k].keys():
+            tempo2[k][str(b)[2:-1]] = str(tempo[k][b])[2:-1]
+"""
+    extensions = (x509.get_extension(i) for i in range(x509.get_extension_count()))
+    extension_data = {e.get_short_name(): str(e) for e in extensions}
+    tempo2.update(extension_data)
+    result={}
+    for k in tempo2.keys():
+        if not(k=='subject' or k=='issuer'):
+            if k == b'ct_precert_scts' :
+                res =  re.findall('Log ID.*\n.*', tempo2[k])
+                f=[]
+                to_match = '[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:?'
+                for id in res :
+                    r=re.findall(to_match,id)
+                    f.append(r[0]+r[1])
+                result[str(k)[2:-1]] = f
+            else:
+                result[str(k)[2:-1]] = tempo2[k]
+        else :
+            result[k]={}
+            for b in tempo2[k].keys():
+                result[k][str(b)[2:-1]] = str(tempo2[k][b])[2:-1]
+    i=i+1
+    final.append(result)
+pprint(final[0])
 sock.shutdown()
 sock.close()
 
