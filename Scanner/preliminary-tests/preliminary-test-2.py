@@ -3,14 +3,19 @@ import re
 from OpenSSL import SSL # to create connection
 from OpenSSL import crypto # to check certificates
 from datetime import datetime
+from retry import retry
 import socket
 import json
 import ast
 
-ip = "172.67.179.52"
-hostname = b"myorganicbuds.me"
+ip = socket.gethostbyname("google.com")
+hostname = b"google.com"
 ca ='/home/antoine/Documenti/Education/Master2/TLS-X.509-Scanner/Scanner/root_store/week3-roots.pem'
 
+
+@retry((SSL.WantReadError), tries=300, delay=0.1)
+def handshake(sock):
+    sock.do_handshake()
 
 context = SSL.Context(SSL.TLS_CLIENT_METHOD)
 context.load_verify_locations(ca)
@@ -18,14 +23,13 @@ context.set_verify(SSL.VERIFY_PEER)
 
 print('Getting certificate chain for {0}'.format(hostname))
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock = SSL.Connection(context=context, socket=sock)
-sock.set_tlsext_host_name(hostname)
-sock.settimeout(1)
-sock.setblocking(1)
-sock.connect((ip, 443))
-sock.do_handshake()
-cert_chain = sock.get_peer_cert_chain()
-print(sock.get_protocol_version_name())
+sock.settimeout(30)
+ssock = SSL.Connection(context=context, socket=sock)
+ssock.set_tlsext_host_name(hostname)
+ssock.connect_ex((ip, 443))
+handshake(ssock)
+cert_chain = ssock.get_peer_cert_chain()
+print(ssock.get_protocol_version_name())
 final = []
 i=0
 for x509 in cert_chain:
@@ -66,7 +70,7 @@ for x509 in cert_chain:
                 result[k][str(b)[2:-1]] = str(tempo2[k][b])[2:-1]
     i=i+1
     final.append(result)
-print(final[0])
+pprint(final)
 sock.shutdown()
 sock.close()
 

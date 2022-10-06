@@ -7,21 +7,20 @@ import ssl
 from OpenSSL import SSL # create connection
 from OpenSSL import crypto # to check certificates
 import socket
+from retry import retry
 ### Project defined
 import LOG
 
     
-def tls(tls:int, ip:str, host:str, trustedCA:str, logs:LOG.Log, i:int):
+def tls(ctxt, ip:str, host:str, logs:LOG.Log, i:int):
     """
     ----Function----
     Name :      ini ()
     type :      class constructor
-    Args :      bject tls) the current object
-                tls(int) -> the tls version to use for the connection
     Effect :    manages the connection until the end
     """
     logs = logs
-    context = set_context(tls, trustedCA)
+    context = ctxt
     (connection, ERR_CONNECT_FAILED)= set_connection(context, ip, host)
     if ERR_CONNECT_FAILED is None:
         (certificate_chain, ERR_CERTIF_FAILED) = get_certif(connection, ip)
@@ -34,18 +33,17 @@ def tls(tls:int, ip:str, host:str, trustedCA:str, logs:LOG.Log, i:int):
     print(i)
 
 
-def set_context(tls:int, ca:str):
+def set_context(ca:str):
     """
     ----Function----
     Name :      set_context()
-                tls(int) -> the tls version to use for the connection
     Effect :    set up the context to use in the upcomming connection
     Return:     context(SSL.Context)
     """
     context = SSL.Context(SSL.TLS_CLIENT_METHOD)
     context.load_verify_locations(ca)
     context.set_verify(SSL.VERIFY_PEER)
-    context.set_timeout(1)
+    #context.set_timeout(1)
     return context
 
 
@@ -60,17 +58,23 @@ def set_connection(ctxt:SSL.Context, ip:str, host:str):
     Return:     connection(SSl.Connection)
     """
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock = SSL.Connection(context=ctxt, socket=sock)
-    sock.set_tlsext_host_name(host.encode("utf-8"))
-    sock.setblocking(1) # do not block the connection, not that useful
+    sock.settimeout(30)
+    ssock = SSL.Connection(context=ctxt, socket=sock)
+    ssock.set_tlsext_host_name(host.encode("utf-8"))
     try :
-        sock.connect((ip, 443))
-        sock.do_handshake()
-        return (sock, None)
+        ssock.connect((ip, 443))
+        handShake(ssock)
+        return (ssock, None)
     except Exception as e:
-        return (None, str(e))
+        e = str(e)
+        if len(e) < 2 :
+            return (None, "WantedReedError")
+        return (None, e)
 
 
+@retry((SSL.WantReadError), tries=100, delay=0.2)
+def handShake(ssock):
+    ssock.do_handshake()
 
 def get_certif(conn:SSL.Connection, ip:str):
     """

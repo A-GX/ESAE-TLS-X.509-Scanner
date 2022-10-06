@@ -234,19 +234,23 @@ def main():
     to_scan = set_to_scan(b_list, in_list)
     # initialise the object to write the logs
     output_logs = LOG.Log(LOG_X509,LOG_ERR)
+    context = TLS.set_context(ROOT_STORE)
     connection_threads = []
     st1 = time.time()
     i=0
     for (dn,ip) in to_scan :
         i += 1
-        connection = Thread(target = TLS.tls, args = (2,ip,dn,ROOT_STORE,output_logs, i))
+        connection = Thread(target = TLS.tls, args = (context,ip,dn,output_logs, i))
         connection_threads.append(connection)
         connection.start()  
     for connection in connection_threads :
         connection.join()
+    st2 = time.time()
+    print("Openning time : {}  ---  Scanning time : {}".format(st1-st0,st2-st1))
     close_files()
     end = time.time()
-    print("Total execution time : {} --- Scanning time : {}     <seconds>".format(end-st0, end-st1))
+    print("Total execution time : {} ---".format(end-st0) +
+        "closing time : {}   <seconds>".format(end-st2))
 
 
 if __name__ == "__main__":
