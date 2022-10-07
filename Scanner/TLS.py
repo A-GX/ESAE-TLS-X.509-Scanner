@@ -72,7 +72,7 @@ def set_connection(ctxt:SSL.Context, ip:str, host:str):
         return (None, e)
 
 
-@retry((SSL.WantReadError), tries=100, delay=0.2)
+@retry((SSL.WantReadError), tries=100, delay=0.1)
 def handShake(ssock):
     ssock.do_handshake()
 

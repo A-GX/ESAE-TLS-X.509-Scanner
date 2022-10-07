@@ -112,4 +112,5 @@ class Log:
             if self.__log_x509 is None:
                 pprint(final)
             else :
-                self.__log_x509.write(json.dumps(final, indent=2)+"\n")
+                to_store = json.dumps(final, indent=2)
+                self.__log_x509.write(to_store+"\n")
